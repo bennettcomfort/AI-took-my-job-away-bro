@@ -8,7 +8,7 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json()
+    const { messages, systemPrompt } = await request.json()
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
@@ -17,10 +17,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prepend system message with character personality
+    const messagesWithSystem = [
+      {
+        role: 'system' as const,
+        content: systemPrompt || 'You are a helpful, friendly, and knowledgeable AI assistant.'
+      },
+      ...messages
+    ]
+
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: messages,
+      messages: messagesWithSystem,
       temperature: 0.7,
       max_tokens: 1000,
     })
